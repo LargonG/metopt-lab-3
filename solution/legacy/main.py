@@ -46,54 +46,62 @@ def loss_function(x, y, w):
 #     return (-2) * np.dot(x.T, (y - np.dot(x, w))) / len(y)
 
 
-points = np.array([[0, 0]])
-
-
-def sgd(gradient, x, y, w_init, eps=0.01, learning_rate=0.01, batch_size=1):
+def sgd(gradient, x, y, w_init, eps=0.01, learning_rate=0.01, batch_size=1,
+        max_iter=100):
     start = time.time()
     w = w_init
     kramer = Kramer_method(x, y)
-    global points
+    points = [w_init]
     epochs = 0
     mem = 0
     arifm_counter = 0
     idshuffle = random.sample(list(range(len(y))), len(y))
-    while True:
+    for _ in range(max_iter):
         idarr = np.random.randint(len(y), size=batch_size)
+
         x_partial = np.array(list(map(lambda i: np.array([1, x[idshuffle[i % len(y)]]]), idarr)))
         y_partial = np.array(list(map(lambda i: y[idshuffle[i % len(y)]], idarr)))
+
         g = gradient(x_partial, y_partial, w, batch_size)
         w = w - learning_rate * gradient(x_partial, y_partial, w, batch_size)
-        points = np.append(points, [w], axis=0)
+        points.append(w)
         epochs += 1
-        if (np.isnan(np.sum(w)) or np.isinf(np.sum(w))):
+
+        if np.isnan(np.sum(w)) or np.isinf(np.sum(w)):
             return np.nan
-        if (np.linalg.norm(kramer - w) <= eps):
+
+        if np.linalg.norm(kramer - w) < eps:
             break
+
         arifm_counter += 2 + 2 * (len(x) * 2 - 1) + len(x) + len(w) * 2 + 1
         timer = time.time() - start
-        data = {'memory_usage': sys.getsizeof(points), 'actions': arifm_counter, 'time': timer, 'epochs': epochs}
+        data = {'memory_usage': sys.getsizeof(points),
+                'actions': arifm_counter,
+                'time': timer,
+                'epochs': epochs,
+                'points': points}
     return (w, data)
 
 
-def momentum(gradient, x, y, w_init, eps=0.01, learning_rate=0.01, b=0.01, batch_size=1):
+def momentum(gradient, x, y, w_init, eps=0.01, learning_rate=0.01, b=0.01, batch_size=1,
+             max_iter=100):
     start = time.time()
     w = w_init
     kramer = Kramer_method(x, y)
-    global points
+    points = [w_init]
     epochs = 0
     mem = 0
     arifm_counter = 0
     idshuffle = random.sample(list(range(len(y))), len(y))
     v = np.array([0, 0])
-    while True:
+    for _ in range(max_iter):
         idarr = np.random.randint(len(y), size=batch_size)
         x_partial = np.array(list(map(lambda i: np.array([1, x[idshuffle[i % len(y)]]]), idarr)))
         y_partial = np.array(list(map(lambda i: y[idshuffle[i % len(y)]], idarr)))
         g = gradient(x_partial, y_partial, w, batch_size)
         v = b * v + (1 - b) * g
         w = w - learning_rate * v
-        points = np.append(points, [w], axis=0)
+        points.append(w)
         epochs += 1
         if (np.isnan(np.sum(w)) or np.isinf(np.sum(w))):
             return np.nan
@@ -101,28 +109,30 @@ def momentum(gradient, x, y, w_init, eps=0.01, learning_rate=0.01, b=0.01, batch
             break
         arifm_counter += 2 + 2 * (len(x) * 2 - 1) + len(x) + len(w) * 2 + 1
         timer = time.time() - start
-        data = {'memory_usage': sys.getsizeof(points), 'actions': arifm_counter, 'time': timer, 'epochs': epochs}
+        data = {'memory_usage': sys.getsizeof(points), 'actions': arifm_counter, 'time': timer, 'epochs': epochs,
+                'points': points}
     return (w, data)
 
 
-def nesterov(gradient, x, y, w_init, eps=0.1, learning_rate=0.01, b=0.01, batch_size=1):
+def nesterov(gradient, x, y, w_init, eps=0.1, learning_rate=0.01, b=0.01, batch_size=1,
+             max_iter=100):
     start = time.time()
     w = w_init
     kramer = Kramer_method(x, y)
-    global points
+    points = [w_init]
     epochs = 0
     mem = 0
     arifm_counter = 0
     idshuffle = random.sample(list(range(len(y))), len(y))
     v = np.array([0, 0])
-    while (True):
+    for _ in range(max_iter):
         idarr = np.random.randint(len(y), size=batch_size)
         x_partial = np.array(list(map(lambda i: np.array([1, x[idshuffle[i % len(y)]]]), idarr)))
         y_partial = np.array(list(map(lambda i: y[idshuffle[i % len(y)]], idarr)))
         g = gradient(x_partial, y_partial, w - learning_rate * b * w, batch_size)
         v = b * v + (1 - b) * g
         w = w - learning_rate * v
-        points = np.append(points, [w], axis=0)
+        points.append(w)
         epochs += 1
         if (np.isnan(np.sum(w)) or np.isinf(np.sum(w))):
             return np.nan
@@ -130,29 +140,31 @@ def nesterov(gradient, x, y, w_init, eps=0.1, learning_rate=0.01, b=0.01, batch_
             break
         arifm_counter += 2 + 2 * (len(x) * 2 - 1) + len(x) + len(w) * 2 + 1
         timer = time.time() - start
-        data = {'memory_usage': sys.getsizeof(points), 'actions': arifm_counter, 'time': timer, 'epochs': epochs}
+        data = {'memory_usage': sys.getsizeof(points), 'actions': arifm_counter, 'time': timer, 'epochs': epochs,
+                'points': points}
     return (w, data)
 
 
-def ada_grad(gradient, x, y, w_init, eps=0.1, learning_rate=0.01, batch_size=1):
+def ada_grad(gradient, x, y, w_init, eps=0.1, learning_rate=0.01, batch_size=1,
+             max_iter=100):
     start = time.time()
     w = w_init
     kramer = Kramer_method(x, y)
-    global points
+    points = [w_init]
     epochs = 0
     mem = 0
     arifm_counter = 0
     idshuffle = random.sample(list(range(len(y))), len(y))
     v = np.array([0, 0])
     G = np.zeros(2)
-    while True:
+    for _ in range(max_iter):
         idarr = np.random.randint(len(y), size=batch_size)
         x_partial = np.array(list(map(lambda i: np.array([1, x[idshuffle[i % len(y)]]]), idarr)))
         y_partial = np.array(list(map(lambda i: y[idshuffle[i % len(y)]], idarr)))
         g = gradient(x_partial, y_partial, w, batch_size)
         G += g ** 2
         w = w - learning_rate * g / (np.sqrt(G))
-        points = np.append(points, [w], axis=0)
+        points.append(w)
         epochs += 1
         if (np.isnan(np.sum(w)) or np.isinf(np.sum(w))):
             return np.nan
@@ -160,28 +172,30 @@ def ada_grad(gradient, x, y, w_init, eps=0.1, learning_rate=0.01, batch_size=1):
             break
         arifm_counter += 2 + 2 * (len(x) * 2 - 1) + len(x) + len(w) * 2 + 1
         timer = time.time() - start
-        data = {'memory_usage': sys.getsizeof(points), 'actions': arifm_counter, 'time': timer, 'epochs': epochs}
+        data = {'memory_usage': sys.getsizeof(points), 'actions': arifm_counter, 'time': timer, 'epochs': epochs,
+                'points': points}
     return w, data
 
 
-def RMSProp(gradient, x, y, w_init, eps=0.1, learning_rate=0.01, b=0.01, batch_size=1):
+def RMSProp(gradient, x, y, w_init, eps=0.1, learning_rate=0.01, b=0.01, batch_size=1,
+            max_iter=100):
     start = time.time()
     w = w_init
     kramer = Kramer_method(x, y)
-    global points
+    points = [w_init]
     epochs = 0
     mem = 0
     arifm_counter = 0
     s = np.array([0, 0])
     idshuffle = random.sample(list(range(len(y))), len(y))
-    while True:
+    for _ in range(max_iter):
         idarr = np.random.randint(len(y), size=batch_size)
         x_partial = np.array(list(map(lambda i: np.array([1, x[idshuffle[i % len(y)]]]), idarr)))
         y_partial = np.array(list(map(lambda i: y[idshuffle[i % len(y)]], idarr)))
         g = gradient(x_partial, y_partial, w - learning_rate * b * w, batch_size)
         s = b * s + (1 - b) * g * g
         w = w - learning_rate * g / ((s + 0.0001) ** (1 / 2))
-        points = np.append(points, [w], axis=0)
+        points.append(w)
         epochs += 1
         if (np.isnan(np.sum(w)) or np.isinf(np.sum(w))):
             return np.nan
@@ -189,15 +203,17 @@ def RMSProp(gradient, x, y, w_init, eps=0.1, learning_rate=0.01, b=0.01, batch_s
             break
         arifm_counter += 2 + 2 * (len(x) * 2 - 1) + len(x) + len(w) * 2 + 1
         timer = time.time() - start
-        data = {'memory_usage': sys.getsizeof(points), 'actions': arifm_counter, 'time': timer, 'epochs': epochs}
+        data = {'memory_usage': sys.getsizeof(points), 'actions': arifm_counter, 'time': timer, 'epochs': epochs,
+                'points': points}
     return (w, data)
 
 
-def adam(gradient, x, y, w_init, eps=0.1, learning_rate=0.01, b1=0.01, b2=0.01, batch_size=1):
+def adam(gradient, x, y, w_init, eps=0.1, learning_rate=0.01, b1=0.01, b2=0.01, batch_size=1,
+         max_iter=100):
     start = time.time()
     w = w_init
     kramer = Kramer_method(x, y)
-    global points
+    points = [w_init]
     epochs = 0
     mem = 0
     arifm_counter = 0
@@ -205,7 +221,7 @@ def adam(gradient, x, y, w_init, eps=0.1, learning_rate=0.01, b1=0.01, b2=0.01, 
     s = np.array([0, 0])
     idshuffle = random.sample(list(range(len(y))), len(y))
     k = 0
-    while True:
+    for _ in range(max_iter):
         idarr = np.random.randint(len(y), size=batch_size)
         x_partial = np.array(list(map(lambda i: np.array([1, x[idshuffle[i % len(y)]]]), idarr)))
         y_partial = np.array(list(map(lambda i: y[idshuffle[i % len(y)]], idarr)))
@@ -217,154 +233,155 @@ def adam(gradient, x, y, w_init, eps=0.1, learning_rate=0.01, b1=0.01, b2=0.01, 
         v_ = v / (1 - b1 ** (k + 1))
         s_ = s / (1 - b2 ** (k + 1))
         w = w - learning_rate * v_ / ((s_ + 0.00001) ** (1 / 2))
-        points = np.append(points, [w], axis=0)
+        points.append(w)
         k += 1
         epochs += 1
         if (np.linalg.norm(kramer - w) <= eps or epochs == 5000):
             break
         arifm_counter += 2 + 2 * (len(x) * 2 - 1) + len(x) + len(w) * 2 + 1
         timer = time.time() - start
-        data = {'memory_usage': sys.getsizeof(points), 'actions': arifm_counter, 'time': timer, 'epochs': epochs}
+        data = {'memory_usage': sys.getsizeof(points), 'actions': arifm_counter, 'time': timer, 'epochs': epochs,
+                'points': points}
     return (w, data)
 
 
-if __name__ == "__main__":
-    num = 100
-    w_init = np.array([0, 0])
-    kramer = Kramer_method(x, y)
-    arr = dict()
-    arr['sgd'] = list()
-    arr['momentum'] = list()
-    arr['nesterov'] = list()
-    arr['ada_grad'] = list()
-    arr['rmsprop'] = list()
-    arr['adam'] = list()
-    batch = 1
-    for i in range(num):
-        print(i)
-        points = np.array([[0, 0]])
-        data = sgd(x, y, [0, 0], eps = 0.05, learning_rate=0.0055, batch_size=batch)[1]
-        arr["sgd"].append(data)
-        points = np.array([[0, 0]])
-        data = momentum(x, y, [0, 0], eps=0.05, learning_rate=0.009, b=0.6, batch_size=batch)[1]
-        arr["momentum"].append(data)
-        points = np.array([[0, 0]])
-        data = nesterov(x, y, w_init, eps=0.05, learning_rate=0.009, b=0.6, batch_size=batch)[1]
-        arr['nesterov'].append(data)
-        points = np.array([[0, 0]])
-        data = ada_grad(x, y, w_init, eps=0.05, learning_rate=0.9, batch_size=batch)[1]
-        arr['ada_grad'].append(data)
-        points = np.array([[0, 0]])
-        data = RMSProp(x, y, w_init, eps=0.05, learning_rate=0.012, b = 0.5, batch_size=batch)[1]
-        arr['rmsprop'].append(data)
-        points = np.array([[0, 0]])
-        data = adam(x, y, w_init, eps=0.05, learning_rate=0.012, b1 = 0.65, b2 = 0.65, batch_size=batch)[1]
-        arr['adam'].append(data)
-    table = np.empty((6, 4))
-    table.fill(0)
-    a = 0
-    for i in arr:
-        for j in arr[i]:
-            b = 0
-            for k in j:
-                table[a][b] += j[k]
-                b += 1
-        a += 1
-    table = table.T
-    table /= num
-    for i in range(0, 4):
-        for j in range(0, 6):
-            print(table[i][j], end=' ')
-        print()
-
-    arr = dict()
-    arr['sgd'] = list()
-    arr['momentum'] = list()
-    arr['nesterov'] = list()
-    arr['ada_grad'] = list()
-    arr['rmsprop'] = list()
-    arr['adam'] = list()
-    batch = 5
-    for i in range(num):
-        print(i)
-        points = np.array([[0, 0]])
-        data = sgd(x, y, [0, 0], eps = 0.05, learning_rate=0.0055, batch_size=batch)[1]
-        arr["sgd"].append(data)
-        points = np.array([[0, 0]])
-        data = momentum(x, y, [0, 0], eps=0.05, learning_rate=0.009, b=0.6, batch_size=batch)[1]
-        arr["momentum"].append(data)
-        points = np.array([[0, 0]])
-        data = nesterov(x, y, w_init, eps=0.05, learning_rate=0.009, b=0.6, batch_size=batch)[1]
-        arr['nesterov'].append(data)
-        points = np.array([[0, 0]])
-        data = ada_grad(x, y, w_init, eps=0.05, learning_rate=0.9, batch_size=batch)[1]
-        arr['ada_grad'].append(data)
-        points = np.array([[0, 0]])
-        data = RMSProp(x, y, w_init, eps=0.05, learning_rate=0.012, b = 0.5, batch_size=batch)[1]
-        arr['rmsprop'].append(data)
-        points = np.array([[0, 0]])
-        data = adam(x, y, w_init, eps=0.05, learning_rate=0.012, b1 = 0.65, b2 = 0.65, batch_size=batch)[1]
-        arr['adam'].append(data)
-    table = np.empty((6, 4))
-    table.fill(0)
-    a = 0
-    for i in arr:
-        for j in arr[i]:
-            b = 0
-            for k in j:
-                table[a][b] += j[k]
-                b += 1
-        a += 1
-    table = table.T
-    table /= num
-    for i in range(0, 4):
-        for j in range(0, 6):
-            print(table[i][j], end=' ')
-        print()
-
-    arr = dict()
-    arr['sgd'] = list()
-    arr['momentum'] = list()
-    arr['nesterov'] = list()
-    arr['ada_grad'] = list()
-    arr['rmsprop'] = list()
-    arr['adam'] = list()
-    batch = len(y)
-    for i in range(num):
-        print(i)
-        points = np.array([[0, 0]])
-        data = sgd(x, y, [0, 0], eps = 0.05, learning_rate=0.0055, batch_size=batch)[1]
-        arr["sgd"].append(data)
-        points = np.array([[0, 0]])
-        data = momentum(x, y, [0, 0], eps=0.05, learning_rate=0.009, b=0.6, batch_size=batch)[1]
-        arr["momentum"].append(data)
-        points = np.array([[0, 0]])
-        data = nesterov(x, y, w_init, eps=0.05, learning_rate=0.009, b=0.6, batch_size=batch)[1]
-        arr['nesterov'].append(data)
-        points = np.array([[0, 0]])
-        data = ada_grad(x, y, w_init, eps=0.05, learning_rate=0.9, batch_size=batch)[1]
-        arr['ada_grad'].append(data)
-        points = np.array([[0, 0]])
-        data = RMSProp(x, y, w_init, eps=0.05, learning_rate=0.012, b = 0.5, batch_size=batch)[1]
-        arr['rmsprop'].append(data)
-        points = np.array([[0, 0]])
-        data = adam(x, y, w_init, eps=0.05, learning_rate=0.012, b1 = 0.65, b2 = 0.65, batch_size=batch)[1]
-        arr['adam'].append(data)
-    table = np.empty((6, 4))
-    table.fill(0)
-
-    a = 0
-    for i in arr:
-        for j in arr[i]:
-            b = 0
-            for k in j:
-                table[a][b] += j[k]
-                b += 1
-        a += 1
-
-    table = table.T
-    table /= num
-    for i in range(0, 4):
-        for j in range(0, 6):
-            print(table[i][j], end=' ')
-        print()
+# if __name__ == "__main__":
+#     num = 100
+#     w_init = np.array([0, 0])
+#     kramer = Kramer_method(x, y)
+#     arr = dict()
+#     arr['sgd'] = list()
+#     arr['momentum'] = list()
+#     arr['nesterov'] = list()
+#     arr['ada_grad'] = list()
+#     arr['rmsprop'] = list()
+#     arr['adam'] = list()
+#     batch = 1
+#     for i in range(num):
+#         print(i)
+#         points = np.array([[0, 0]])
+#         data = sgd(x, y, [0, 0], eps = 0.05, learning_rate=0.0055, batch_size=batch)[1]
+#         arr["sgd"].append(data)
+#         points = np.array([[0, 0]])
+#         data = momentum(x, y, [0, 0], eps=0.05, learning_rate=0.009, b=0.6, batch_size=batch)[1]
+#         arr["momentum"].append(data)
+#         points = np.array([[0, 0]])
+#         data = nesterov(x, y, w_init, eps=0.05, learning_rate=0.009, b=0.6, batch_size=batch)[1]
+#         arr['nesterov'].append(data)
+#         points = np.array([[0, 0]])
+#         data = ada_grad(x, y, w_init, eps=0.05, learning_rate=0.9, batch_size=batch)[1]
+#         arr['ada_grad'].append(data)
+#         points = np.array([[0, 0]])
+#         data = RMSProp(x, y, w_init, eps=0.05, learning_rate=0.012, b = 0.5, batch_size=batch)[1]
+#         arr['rmsprop'].append(data)
+#         points = np.array([[0, 0]])
+#         data = adam(x, y, w_init, eps=0.05, learning_rate=0.012, b1 = 0.65, b2 = 0.65, batch_size=batch)[1]
+#         arr['adam'].append(data)
+#     table = np.empty((6, 4))
+#     table.fill(0)
+#     a = 0
+#     for i in arr:
+#         for j in arr[i]:
+#             b = 0
+#             for k in j:
+#                 table[a][b] += j[k]
+#                 b += 1
+#         a += 1
+#     table = table.T
+#     table /= num
+#     for i in range(0, 4):
+#         for j in range(0, 6):
+#             print(table[i][j], end=' ')
+#         print()
+#
+#     arr = dict()
+#     arr['sgd'] = list()
+#     arr['momentum'] = list()
+#     arr['nesterov'] = list()
+#     arr['ada_grad'] = list()
+#     arr['rmsprop'] = list()
+#     arr['adam'] = list()
+#     batch = 5
+#     for i in range(num):
+#         print(i)
+#         points = np.array([[0, 0]])
+#         data = sgd(x, y, [0, 0], eps = 0.05, learning_rate=0.0055, batch_size=batch)[1]
+#         arr["sgd"].append(data)
+#         points = np.array([[0, 0]])
+#         data = momentum(x, y, [0, 0], eps=0.05, learning_rate=0.009, b=0.6, batch_size=batch)[1]
+#         arr["momentum"].append(data)
+#         points = np.array([[0, 0]])
+#         data = nesterov(x, y, w_init, eps=0.05, learning_rate=0.009, b=0.6, batch_size=batch)[1]
+#         arr['nesterov'].append(data)
+#         points = np.array([[0, 0]])
+#         data = ada_grad(x, y, w_init, eps=0.05, learning_rate=0.9, batch_size=batch)[1]
+#         arr['ada_grad'].append(data)
+#         points = np.array([[0, 0]])
+#         data = RMSProp(x, y, w_init, eps=0.05, learning_rate=0.012, b = 0.5, batch_size=batch)[1]
+#         arr['rmsprop'].append(data)
+#         points = np.array([[0, 0]])
+#         data = adam(x, y, w_init, eps=0.05, learning_rate=0.012, b1 = 0.65, b2 = 0.65, batch_size=batch)[1]
+#         arr['adam'].append(data)
+#     table = np.empty((6, 4))
+#     table.fill(0)
+#     a = 0
+#     for i in arr:
+#         for j in arr[i]:
+#             b = 0
+#             for k in j:
+#                 table[a][b] += j[k]
+#                 b += 1
+#         a += 1
+#     table = table.T
+#     table /= num
+#     for i in range(0, 4):
+#         for j in range(0, 6):
+#             print(table[i][j], end=' ')
+#         print()
+#
+#     arr = dict()
+#     arr['sgd'] = list()
+#     arr['momentum'] = list()
+#     arr['nesterov'] = list()
+#     arr['ada_grad'] = list()
+#     arr['rmsprop'] = list()
+#     arr['adam'] = list()
+#     batch = len(y)
+#     for i in range(num):
+#         print(i)
+#         points = np.array([[0, 0]])
+#         data = sgd(x, y, [0, 0], eps = 0.05, learning_rate=0.0055, batch_size=batch)[1]
+#         arr["sgd"].append(data)
+#         points = np.array([[0, 0]])
+#         data = momentum(x, y, [0, 0], eps=0.05, learning_rate=0.009, b=0.6, batch_size=batch)[1]
+#         arr["momentum"].append(data)
+#         points = np.array([[0, 0]])
+#         data = nesterov(x, y, w_init, eps=0.05, learning_rate=0.009, b=0.6, batch_size=batch)[1]
+#         arr['nesterov'].append(data)
+#         points = np.array([[0, 0]])
+#         data = ada_grad(x, y, w_init, eps=0.05, learning_rate=0.9, batch_size=batch)[1]
+#         arr['ada_grad'].append(data)
+#         points = np.array([[0, 0]])
+#         data = RMSProp(x, y, w_init, eps=0.05, learning_rate=0.012, b = 0.5, batch_size=batch)[1]
+#         arr['rmsprop'].append(data)
+#         points = np.array([[0, 0]])
+#         data = adam(x, y, w_init, eps=0.05, learning_rate=0.012, b1 = 0.65, b2 = 0.65, batch_size=batch)[1]
+#         arr['adam'].append(data)
+#     table = np.empty((6, 4))
+#     table.fill(0)
+#
+#     a = 0
+#     for i in arr:
+#         for j in arr[i]:
+#             b = 0
+#             for k in j:
+#                 table[a][b] += j[k]
+#                 b += 1
+#         a += 1
+#
+#     table = table.T
+#     table /= num
+#     for i in range(0, 4):
+#         for j in range(0, 6):
+#             print(table[i][j], end=' ')
+#         print()
