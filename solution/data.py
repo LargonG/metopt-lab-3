@@ -14,7 +14,7 @@ def exp_jac(x):
 
 
 def polynomial_test(n):
-    return lambda x: example.polynomial(n, x)
+    return lambda x: example.polynomial(n)(x)
 
 
 def polynomial_jac(n):

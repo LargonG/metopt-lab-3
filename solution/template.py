@@ -27,8 +27,8 @@ def exp(x: np.ndarray) -> np.ndarray:
     return np.exp(x)
 
 
-def polynomial(n: int, x: np.ndarray):
-    return lambda betta: sum(betta[i] * (x ** i) for i in range(n))
+def polynomial(n: int):
+    return lambda x: lambda betta: sum(betta[i] * (x ** i) for i in range(n))
 
 
 def hyperbola(n: int, const: float = 0):
