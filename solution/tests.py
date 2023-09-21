@@ -1,15 +1,33 @@
 import numpy as np
 import util
 from models import funcs, funcs_params
+import sys
+from memory_profiler import profile
 
 
 class ProcInfo:
-    def __init__(self, time, memory, points, arithmetic):
+    def __init__(self, time, memory, points, arithmetic, iterations):
         self.time = time
         self.memory = memory
         self.points = points
         self.generations = len(points)
         self.arithmetic = arithmetic
+        self.iterations = iterations
+
+
+def matrix_multiplication(A, B):
+    return len(A) * len(A[0]) * len(B)
+
+
+def matrix_inv(A):
+    return len(A) * len(A[0]) * len(A)
+
+
+def matrix_square(A):
+    return len(A) * len(A[0])
+
+def create_info(start_time, end_time, points, arithmetic):
+    return ProcInfo(end_time - start_time, sys.getsizeof(points), points, arithmetic)
 
 
 class Test:
@@ -48,5 +66,4 @@ def create_tests():
             for (begin, end, steps) in intervals
             for point in init_points
             for real in real_functions]
-
 

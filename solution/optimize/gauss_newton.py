@@ -1,8 +1,21 @@
 import numpy as np
+import time
+import sys
 from numpy.linalg import inv, norm
+from memory_profiler import memory_usage, profile
+
+from solution.tests import ProcInfo
 
 
+@profile(precision=4)
 def gauss_newton(func, jacobian, start, eps, max_iter):
+    trace = [start]
+
+    actions = 0
+    iter = 0
+
+    start_time = time.time()
+
     param = np.array(start)
     for i in range(max_iter):
         old_param = param
@@ -12,7 +25,18 @@ def gauss_newton(func, jacobian, start, eps, max_iter):
         d = inv(J.transpose() @ J) @ J.transpose() @ func(param)
         param = old_param - d  # NOTE: + -- if regression else -
 
+        trace.append(param)
+        actions += 1
+
+        iter += 1
         if norm(d) < eps:
             break
 
-    return param
+    end_time = time.time()
+
+    return param, ProcInfo(time=end_time - start_time,
+                           memory=None,
+                           points=trace,
+                           arithmetic=actions,
+                           iterations=iter
+                           )

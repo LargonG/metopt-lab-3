@@ -1,9 +1,20 @@
 import numpy as np
 from numpy.linalg import norm
 import solution.optimize.linear_search.wolfe as descent
+import time
+from memory_profiler import profile
+from solution.tests import ProcInfo
 
 
+@profile(precision=4)
 def bfgs(func, grad, init_point, eps=1e-4, max_iter=100):
+    trace = [init_point]
+
+    iters = 0
+    actions = 0
+
+    start_time = time.time()
+
     point = init_point  # row
     H = np.eye(len(point))  # matrix
     E = np.eye(len(point))  # matrix
@@ -12,6 +23,7 @@ def bfgs(func, grad, init_point, eps=1e-4, max_iter=100):
         g = grad(point)  # row
         p = -H.dot(g)  # row
 
+        iters += 1
         if norm(g) < eps:
             break
 
@@ -39,4 +51,13 @@ def bfgs(func, grad, init_point, eps=1e-4, max_iter=100):
 
         point = point + s
 
-    return point
+        trace.append(point)
+
+    end_time = time.time()
+
+    return point, ProcInfo(time=end_time - start_time,
+                           memory=None,
+                           points=trace,
+                           arithmetic=actions,
+                           iterations=iters
+                           )
