@@ -1,6 +1,6 @@
 import numpy as np
 import sympy as sp
-import template as example
+import util as example
 
 
 def exp_test(x):
@@ -70,4 +70,12 @@ funcs = {
     "square": (square_test, square_jac),
     "sin": (sin_test, sin_jac),
     "sin2": (sin2_test, sin2_jac)
+}
+
+funcs_params = {
+    'exp': 2,
+    'pol': n,
+    'square': 2,
+    'sin': 3,
+    'sin2': 3
 }

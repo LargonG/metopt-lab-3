@@ -1,4 +1,4 @@
-from solution.proc_observe import ProcInfo
+from solution.tests import ProcInfo
 
 
 def to_normal_function(legacy_function, grad):
