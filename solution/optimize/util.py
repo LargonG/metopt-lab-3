@@ -7,6 +7,7 @@ from solution.optimize.linear.momentum import momentum
 from solution.optimize.linear.nesterov import nesterov
 from solution.optimize.linear.ada_grad import ada_grad
 from solution.optimize.linear.rms_prop import rms_prop
+from solution.optimize.linear.adam import adam
 
 
 def optimize(func, jac, reg, grad=None, hess=None, method=gauss_newton):
@@ -39,7 +40,8 @@ def optimize(func, jac, reg, grad=None, hess=None, method=gauss_newton):
         'MOMENTUM': momentum,
         'NESTEROV': nesterov,
         'ADA-GRAD': ada_grad,
-        'RMS-PROP': rms_prop
+        'RMS-PROP': rms_prop,
+        'ADAM': adam
     }
 
     return mp[method]
