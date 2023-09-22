@@ -39,10 +39,6 @@ def sin_jac(x):
     ).transpose()
 
 
-def sin_sympy(x):
-    return lambda betta: betta[0] * sp.sin(x * betta[1]) + betta[2]
-
-
 def sin2_test(x):
     return lambda betta: betta[0] * np.sin(x * betta[1] + betta[2])
 
@@ -52,6 +48,17 @@ def sin2_jac(x):
         -np.sin(x * betta[1] + betta[2]),
         -betta[0] * x * np.cos(x * betta[1] + betta[2]),
         -betta[0] * np.cos(x * betta[1] + betta[2])
+    ]).transpose()
+
+
+def lin_test(x):
+    return lambda betta: betta[0] * x + betta[1]
+
+
+def lin_jac(x):
+    return lambda betta: np.array([
+        -x,
+        -np.ones(len(x))
     ]).transpose()
 
 
@@ -69,7 +76,8 @@ funcs = {
     "pol": (polynomial_test(n), polynomial_jac(n)),
     "square": (square_test, square_jac),
     "sin": (sin_test, sin_jac),
-    "sin2": (sin2_test, sin2_jac)
+    "sin2": (sin2_test, sin2_jac),
+    'lin': (lin_test, lin_jac)
 }
 
 funcs_params = {
@@ -77,5 +85,6 @@ funcs_params = {
     'pol': n,
     'square': 2,
     'sin': 3,
-    'sin2': 3
+    'sin2': 3,
+    'lin': 2
 }

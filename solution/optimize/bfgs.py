@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.linalg import norm
-import solution.optimize.linear_search.wolfe as descent
+import solution.optimize.line_search.wolfe as descent
 import time
 from memory_profiler import profile
 from solution.tests import ProcInfo

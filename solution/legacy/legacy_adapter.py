@@ -1,4 +1,5 @@
 from solution.tests import ProcInfo
+import numpy as np
 
 
 def to_normal_function(legacy_function, grad):
@@ -21,4 +22,5 @@ def to_normal_observer(data):
     return ProcInfo(time=data['time'],
                     memory=data['memory_usage'],
                     points=data['points'],
-                    arithmetic=data['actions'])
+                    arithmetic=data['actions'],
+                    iterations=data['epochs'])

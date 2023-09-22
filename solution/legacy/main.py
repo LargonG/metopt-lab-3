@@ -4,12 +4,13 @@ import random
 import matplotlib.patches as mpatches
 import sys
 import time
+from memory_profiler import profile
 
 plt.rcParams["figure.figsize"] = (10, 10)
 
 
-# def gradient(x, y, w, batch_size):
-#     return (-2) * np.dot(x.T, (y - np.dot(x, w))) / len(y)
+def gradient(x, y, w, batch_size):
+    return (-2) * np.dot(x.T, (y - np.dot(x, w))) / len(y)
 
 
 def Kramer_method(x, y):
@@ -42,11 +43,8 @@ def loss_function(x, y, w):
     return np.sum((y - np.dot(x, w)) ** 2)
 
 
-# def gradient(x, y, w, batch_size):
-#     return (-2) * np.dot(x.T, (y - np.dot(x, w))) / len(y)
-
-
-def sgd(gradient, x, y, w_init, eps=0.01, learning_rate=0.01, batch_size=1,
+@profile(precision=4)
+def sgd(grad, x, y, w_init, eps=0.01, learning_rate=0.01, batch_size=1,
         max_iter=100):
     start = time.time()
     w = w_init
@@ -54,6 +52,7 @@ def sgd(gradient, x, y, w_init, eps=0.01, learning_rate=0.01, batch_size=1,
     points = [w_init]
     epochs = 0
     mem = 0
+    data = {}
     arifm_counter = 0
     idshuffle = random.sample(list(range(len(y))), len(y))
     for _ in range(max_iter):
@@ -68,11 +67,95 @@ def sgd(gradient, x, y, w_init, eps=0.01, learning_rate=0.01, batch_size=1,
         epochs += 1
 
         if np.isnan(np.sum(w)) or np.isinf(np.sum(w)):
-            return np.nan
+            break
 
         if np.linalg.norm(kramer - w) < eps:
             break
 
+        arifm_counter += 2 + 2 * (len(x) * 2 - 1) + len(x) + len(w) * 2 + 1
+
+    timer = time.time() - start
+    data = {'memory_usage': sys.getsizeof(points),
+            'actions': arifm_counter,
+            'time': timer,
+            'epochs': epochs,
+            'points': points}
+
+    return w, data
+
+
+@profile(precision=4)
+def momentum(grad, x, y, w_init, eps=0.01, learning_rate=0.01, b=0.01, batch_size=1,
+             max_iter=100):
+    start = time.time()
+    w = w_init
+    kramer = Kramer_method(x, y)
+    points = [w_init]
+    epochs = 0
+    mem = 0
+    arifm_counter = 0
+    idshuffle = random.sample(list(range(len(y))), len(y))
+    v = np.array([0, 0])
+    for _ in range(max_iter):
+        idarr = np.random.randint(len(y), size=batch_size)
+
+        x_partial = np.array(list(map(lambda i: np.array([1, x[idshuffle[i % len(y)]]]), idarr)))
+        y_partial = np.array(list(map(lambda i: y[idshuffle[i % len(y)]], idarr)))
+
+        g = gradient(x_partial, y_partial, w, batch_size)
+        v = b * v + (1 - b) * g
+        w = w - learning_rate * v
+
+        points.append(w)
+        epochs += 1
+
+        if np.isnan(np.sum(w)) or np.isinf(np.sum(w)):
+            return np.nan
+
+        if np.linalg.norm(kramer - w) <= eps:
+            break
+
+        arifm_counter += 2 + 2 * (len(x) * 2 - 1) + len(x) + len(w) * 2 + 1
+
+    timer = time.time() - start
+    data = {'memory_usage': sys.getsizeof(points),
+            'actions': arifm_counter,
+            'time': timer,
+            'epochs': epochs,
+            'points': points}
+    return w, data
+
+
+@profile(precision=4)
+def nesterov(grad, x, y, w_init, eps=0.1, learning_rate=0.01, b=0.01, batch_size=1,
+             max_iter=100):
+    start = time.time()
+    w = w_init
+    kramer = Kramer_method(x, y)
+    points = [w_init]
+    epochs = 0
+    mem = 0
+    arifm_counter = 0
+    idshuffle = random.sample(list(range(len(y))), len(y))
+    v = np.array([0, 0])
+    for _ in range(max_iter):
+        idarr = np.random.randint(len(y), size=batch_size)
+
+        x_partial = np.array(list(map(lambda i: np.array([1, x[idshuffle[i % len(y)]]]), idarr)))
+        y_partial = np.array(list(map(lambda i: y[idshuffle[i % len(y)]], idarr)))
+
+        g = gradient(x_partial, y_partial, w - learning_rate * b * w, batch_size)
+
+        v = b * v + (1 - b) * g
+        w = w - learning_rate * v
+
+        points.append(w)
+        epochs += 1
+
+        if (np.isnan(np.sum(w)) or np.isinf(np.sum(w))):
+            return np.nan
+        if (np.linalg.norm(w - kramer) <= eps):
+            break
         arifm_counter += 2 + 2 * (len(x) * 2 - 1) + len(x) + len(w) * 2 + 1
         timer = time.time() - start
         data = {'memory_usage': sys.getsizeof(points),
@@ -80,72 +163,11 @@ def sgd(gradient, x, y, w_init, eps=0.01, learning_rate=0.01, batch_size=1,
                 'time': timer,
                 'epochs': epochs,
                 'points': points}
-    return (w, data)
+    return w, data
 
 
-def momentum(gradient, x, y, w_init, eps=0.01, learning_rate=0.01, b=0.01, batch_size=1,
-             max_iter=100):
-    start = time.time()
-    w = w_init
-    kramer = Kramer_method(x, y)
-    points = [w_init]
-    epochs = 0
-    mem = 0
-    arifm_counter = 0
-    idshuffle = random.sample(list(range(len(y))), len(y))
-    v = np.array([0, 0])
-    for _ in range(max_iter):
-        idarr = np.random.randint(len(y), size=batch_size)
-        x_partial = np.array(list(map(lambda i: np.array([1, x[idshuffle[i % len(y)]]]), idarr)))
-        y_partial = np.array(list(map(lambda i: y[idshuffle[i % len(y)]], idarr)))
-        g = gradient(x_partial, y_partial, w, batch_size)
-        v = b * v + (1 - b) * g
-        w = w - learning_rate * v
-        points.append(w)
-        epochs += 1
-        if (np.isnan(np.sum(w)) or np.isinf(np.sum(w))):
-            return np.nan
-        if (np.linalg.norm(kramer - w) <= eps):
-            break
-        arifm_counter += 2 + 2 * (len(x) * 2 - 1) + len(x) + len(w) * 2 + 1
-        timer = time.time() - start
-        data = {'memory_usage': sys.getsizeof(points), 'actions': arifm_counter, 'time': timer, 'epochs': epochs,
-                'points': points}
-    return (w, data)
-
-
-def nesterov(gradient, x, y, w_init, eps=0.1, learning_rate=0.01, b=0.01, batch_size=1,
-             max_iter=100):
-    start = time.time()
-    w = w_init
-    kramer = Kramer_method(x, y)
-    points = [w_init]
-    epochs = 0
-    mem = 0
-    arifm_counter = 0
-    idshuffle = random.sample(list(range(len(y))), len(y))
-    v = np.array([0, 0])
-    for _ in range(max_iter):
-        idarr = np.random.randint(len(y), size=batch_size)
-        x_partial = np.array(list(map(lambda i: np.array([1, x[idshuffle[i % len(y)]]]), idarr)))
-        y_partial = np.array(list(map(lambda i: y[idshuffle[i % len(y)]], idarr)))
-        g = gradient(x_partial, y_partial, w - learning_rate * b * w, batch_size)
-        v = b * v + (1 - b) * g
-        w = w - learning_rate * v
-        points.append(w)
-        epochs += 1
-        if (np.isnan(np.sum(w)) or np.isinf(np.sum(w))):
-            return np.nan
-        if (np.linalg.norm(w - kramer) <= eps):
-            break
-        arifm_counter += 2 + 2 * (len(x) * 2 - 1) + len(x) + len(w) * 2 + 1
-        timer = time.time() - start
-        data = {'memory_usage': sys.getsizeof(points), 'actions': arifm_counter, 'time': timer, 'epochs': epochs,
-                'points': points}
-    return (w, data)
-
-
-def ada_grad(gradient, x, y, w_init, eps=0.1, learning_rate=0.01, batch_size=1,
+@profile(precision=4)
+def ada_grad(grad, x, y, w_init, eps=0.1, learning_rate=0.01, batch_size=1,
              max_iter=100):
     start = time.time()
     w = w_init
@@ -159,25 +181,34 @@ def ada_grad(gradient, x, y, w_init, eps=0.1, learning_rate=0.01, batch_size=1,
     G = np.zeros(2)
     for _ in range(max_iter):
         idarr = np.random.randint(len(y), size=batch_size)
+
         x_partial = np.array(list(map(lambda i: np.array([1, x[idshuffle[i % len(y)]]]), idarr)))
         y_partial = np.array(list(map(lambda i: y[idshuffle[i % len(y)]], idarr)))
+
         g = gradient(x_partial, y_partial, w, batch_size)
+
         G += g ** 2
         w = w - learning_rate * g / (np.sqrt(G))
+
         points.append(w)
         epochs += 1
+
         if (np.isnan(np.sum(w)) or np.isinf(np.sum(w))):
             return np.nan
         if (np.linalg.norm(kramer - w) <= eps):
             break
         arifm_counter += 2 + 2 * (len(x) * 2 - 1) + len(x) + len(w) * 2 + 1
         timer = time.time() - start
-        data = {'memory_usage': sys.getsizeof(points), 'actions': arifm_counter, 'time': timer, 'epochs': epochs,
+        data = {'memory_usage': sys.getsizeof(points),
+                'actions': arifm_counter,
+                'time': timer,
+                'epochs': epochs,
                 'points': points}
     return w, data
 
 
-def RMSProp(gradient, x, y, w_init, eps=0.1, learning_rate=0.01, b=0.01, batch_size=1,
+@profile(precision=4)
+def RMSProp(grad, x, y, w_init, eps=0.1, learning_rate=0.01, b=0.01, batch_size=1,
             max_iter=100):
     start = time.time()
     w = w_init
@@ -203,12 +234,16 @@ def RMSProp(gradient, x, y, w_init, eps=0.1, learning_rate=0.01, b=0.01, batch_s
             break
         arifm_counter += 2 + 2 * (len(x) * 2 - 1) + len(x) + len(w) * 2 + 1
         timer = time.time() - start
-        data = {'memory_usage': sys.getsizeof(points), 'actions': arifm_counter, 'time': timer, 'epochs': epochs,
+        data = {'memory_usage': sys.getsizeof(points),
+                'actions': arifm_counter,
+                'time': timer,
+                'epochs': epochs,
                 'points': points}
-    return (w, data)
+    return w, data
 
 
-def adam(gradient, x, y, w_init, eps=0.1, learning_rate=0.01, b1=0.01, b2=0.01, batch_size=1,
+@profile(precision=4)
+def adam(grad, x, y, w_init, eps=0.1, learning_rate=0.01, b1=0.01, b2=0.01, batch_size=1,
          max_iter=100):
     start = time.time()
     w = w_init
@@ -240,10 +275,12 @@ def adam(gradient, x, y, w_init, eps=0.1, learning_rate=0.01, b1=0.01, b2=0.01, 
             break
         arifm_counter += 2 + 2 * (len(x) * 2 - 1) + len(x) + len(w) * 2 + 1
         timer = time.time() - start
-        data = {'memory_usage': sys.getsizeof(points), 'actions': arifm_counter, 'time': timer, 'epochs': epochs,
+        data = {'memory_usage': sys.getsizeof(points),
+                'actions': arifm_counter,
+                'time': timer,
+                'epochs': epochs,
                 'points': points}
-    return (w, data)
-
+    return w, data
 
 # if __name__ == "__main__":
 #     num = 100

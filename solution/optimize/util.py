@@ -1,10 +1,13 @@
-from solution.optimize.bfgs import *
-from solution.optimize.lbfgs import *
-from solution.optimize.gauss_newton import *
-from solution.optimize.powell_dog_leg import *
+from solution.optimize.bfgs import bfgs
+from solution.optimize.lbfgs import lbfgs
+from solution.optimize.gauss_newton import gauss_newton
+from solution.optimize.powell_dog_leg import powell_dog_leg
+from solution.optimize.linear.sgd import sgd
+from solution.optimize.linear.momentum import momentum
+from solution.optimize.linear.nesterov import nesterov
+from solution.optimize.linear.ada_grad import ada_grad
 
-
-def optimize(func, jac, reg, grad=None, hess=None, method='GAUSS-NEWTON'):
+def optimize(func, jac, reg, grad=None, hess=None, method=gauss_newton):
     iterations = 100
 
     def run_gauss(x, y, init_point, eps=1e-4, max_iter=iterations):
@@ -29,7 +32,11 @@ def optimize(func, jac, reg, grad=None, hess=None, method='GAUSS-NEWTON'):
         'GAUSS-NEWTON': run_gauss,
         'POWELL-DOG-LEG': run_powell,
         'BFGS': run_bfgs,
-        'L_BFGS': run_lbfgs
+        'L-BFGS': run_lbfgs,
+        'SGD': sgd,
+        'MOMENTUM': momentum,
+        'NESTEROV': nesterov,
+        'ADA-GRAD': ada_grad
     }
 
     return mp[method]

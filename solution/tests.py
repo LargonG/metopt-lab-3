@@ -6,7 +6,15 @@ from memory_profiler import profile
 
 
 class ProcInfo:
-    def __init__(self, time, memory, points, arithmetic, iterations):
+    def __init__(self,
+                 time=0,
+                 memory=None,
+                 points=None,
+                 arithmetic=None,
+                 iterations=0):
+        if points is None:
+            points = []
+
         self.time = time
         self.memory = memory
         self.points = points
@@ -25,6 +33,7 @@ def matrix_inv(A):
 
 def matrix_square(A):
     return len(A) * len(A[0])
+
 
 def create_info(start_time, end_time, points, arithmetic):
     return ProcInfo(end_time - start_time, sys.getsizeof(points), points, arithmetic)
@@ -56,7 +65,7 @@ real_functions = [
     np.sin,
     np.cos,
     np.exp,
-    lambda x: sum(x ** i for i in range(10))
+    lambda x: sum(x ** i for i in range(3))
 ]
 
 
@@ -67,3 +76,10 @@ def create_tests():
             for point in init_points
             for real in real_functions]
 
+
+def create_test(func,
+                model_name='exp',
+                point=np.array([1., 1., 1., 1., 1.]),
+                params=funcs_params['exp'],
+                begin=0, end=5, steps=50):
+    return Test(funcs[model_name], point, params, func, begin, end, steps)
