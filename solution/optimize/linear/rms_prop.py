@@ -9,7 +9,8 @@ from solution.tests import ProcInfo
 
 
 @profile
-def ada_grad(x, y, start,
+def rms_prop(x, y, start,
+             gamma=0.01,
              eps=1e-4, learning_rate=0.01, batch_size=1,
              max_iter=100):
     trace = [start]
@@ -24,7 +25,7 @@ def ada_grad(x, y, start,
         x_partial, y_partial = partial(x, y, batch_size)
         g = lin_grad(x_partial, y_partial, point)
 
-        G += g ** 2
+        G = gamma * G + (1 - gamma) * (g ** 2)
         delta = - learning_rate * g / (np.sqrt(G) + eps)
         point = point + delta
 

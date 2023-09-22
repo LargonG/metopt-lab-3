@@ -223,15 +223,21 @@ def RMSProp(grad, x, y, w_init, eps=0.1, learning_rate=0.01, b=0.01, batch_size=
         idarr = np.random.randint(len(y), size=batch_size)
         x_partial = np.array(list(map(lambda i: np.array([1, x[idshuffle[i % len(y)]]]), idarr)))
         y_partial = np.array(list(map(lambda i: y[idshuffle[i % len(y)]], idarr)))
+
         g = gradient(x_partial, y_partial, w - learning_rate * b * w, batch_size)
+
         s = b * s + (1 - b) * g * g
         w = w - learning_rate * g / ((s + 0.0001) ** (1 / 2))
+
         points.append(w)
         epochs += 1
+
         if (np.isnan(np.sum(w)) or np.isinf(np.sum(w))):
             return np.nan
+
         if (np.linalg.norm(kramer - w) <= eps or epochs == 5000):
             break
+
         arifm_counter += 2 + 2 * (len(x) * 2 - 1) + len(x) + len(w) * 2 + 1
         timer = time.time() - start
         data = {'memory_usage': sys.getsizeof(points),
