@@ -9,6 +9,8 @@ Using powell dog leg algorithm to optimize function
 @:param max_iter -- maximal count of iterations
 """
 import sys
+import tracemalloc
+
 from memory_profiler import profile
 import numpy as np
 from numpy.linalg import inv, norm
@@ -25,6 +27,7 @@ def powell_dog_leg(func, grad, H, init_point, delta, eps, max_iter):
     actions = 0
     iter = 0
 
+    tracemalloc.start()
     start_time = time.time()
 
     point = init_point
@@ -61,9 +64,11 @@ def powell_dog_leg(func, grad, H, init_point, delta, eps, max_iter):
             break
 
     end_time = time.time()
+    memory = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
 
     return point, ProcInfo(time=end_time - start_time,
-                           memory=None,
+                           memory=memory,
                            points=trace,
                            arithmetic=actions,
                            iterations=iter

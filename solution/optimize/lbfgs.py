@@ -1,3 +1,5 @@
+import tracemalloc
+
 import numpy as np
 from numpy.linalg import norm
 import time
@@ -13,6 +15,7 @@ def lbfgs(func, grad, generations, start, t=0.5, eps=1e-4, max_iter=100):
     iters = 0
     actions = 0
 
+    tracemalloc.start()
     start_time = time.time()
 
     dim = len(start)
@@ -73,9 +76,11 @@ def lbfgs(func, grad, generations, start, t=0.5, eps=1e-4, max_iter=100):
             z = z + s[i] * (alpha[i] - beta)
 
     end_time = time.time()
+    memory = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
 
     return point, ProcInfo(time=end_time - start_time,
-                           memory=None,
+                           memory=memory,
                            points=trace,
                            arithmetic=actions,
                            iterations=iters

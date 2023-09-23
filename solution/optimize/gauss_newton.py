@@ -1,3 +1,5 @@
+import tracemalloc
+
 import numpy as np
 import time
 import sys
@@ -14,6 +16,7 @@ def gauss_newton(func, jacobian, start, eps, max_iter):
     actions = 0
     iter = 0
 
+    tracemalloc.start()
     start_time = time.time()
 
     param = np.array(start)
@@ -34,8 +37,12 @@ def gauss_newton(func, jacobian, start, eps, max_iter):
 
     end_time = time.time()
 
+    memory = tracemalloc.get_traced_memory()
+    print(memory)
+    tracemalloc.stop()
+
     return param, ProcInfo(time=end_time - start_time,
-                           memory=None,
+                           memory=memory,
                            points=trace,
                            arithmetic=actions,
                            iterations=iter
