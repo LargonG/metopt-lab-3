@@ -10,3 +10,7 @@ def grad(x, jacobian, r):
 def hessian(x, jacobian):
     j = jacobian(x)
     return lambda betta: 2 * j(betta).transpose() @ j(betta)
+
+
+def regression_function(func_model, x, y):
+    return lambda betta: sum((y - func_model(x)(betta)) ** 2)

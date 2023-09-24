@@ -43,7 +43,7 @@ def lbfgs(func, grad, generations, start, t=0.5, eps=1e-4, max_iter=100):
 
         iters += 1
 
-        if norm(g) < eps:
+        if norm(g) < eps or norm(z) < eps:
             break
 
         if tau > eps or k == 0:
